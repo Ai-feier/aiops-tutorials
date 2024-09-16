@@ -1,0 +1,19 @@
+apiVersion: redis.tencentcloud.crossplane.io/v1alpha1
+kind: Instance
+metadata:
+  name: example-redis
+spec:
+  forProvider:
+    availabilityZone: ap-hongkong-1
+    memSize: 8192
+    name: terrform_test
+    passwordSecretRef:
+      key: redis-password
+      name: example-creds
+      namespace: crossplane-system
+    port: 6379
+    redisReplicasNum: 1
+    redisShardNum: 1
+    subnetId: example-redis-subnet
+    typeId: 2
+    vpcId: example-redis-vpc
