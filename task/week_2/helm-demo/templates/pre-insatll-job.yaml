@@ -1,0 +1,27 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-post-install-job
+  labels:
+    release: {{ .Release.Name }}
+    chart: {{ .Chart.Name }}
+    version: {{ .Chart.Version }}
+  annotations:
+    # 注意，如果没有下面的这个注释的话，当前的这个Job就会被当成release的一部分
+    "helm.sh/hook": pre-install
+    "helm.sh/hook-weight": "-5"
+    #"helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  template:
+    metadata:
+      name: {{ .Release.Name }}
+      labels:
+        release: {{ .Release.Name }}
+        chart: {{ .Chart.Name }}
+        version: {{ .Chart.Version }}
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: pre-install-job
+          image: busybox
+          command: ["sh", "-c", "echo 'this is helm pre-install hook!'"]
