@@ -1,0 +1,8 @@
+apiVersion: aiops.geektime.com/v1alpha1
+kind: AIOps
+metadata:
+  name: test-crd
+  namespace: default
+spec:
+  field1: test1
+  field2: test2
