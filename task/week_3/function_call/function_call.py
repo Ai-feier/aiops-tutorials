@@ -83,78 +83,99 @@ tools = [
     }
 ]
 
-client = OpenAI(api_key="sk-cf4640fe1a604067a9e0d80feda8cf3e", base_url="https://api.deepseek.com/v1")
+client = OpenAI(api_key="sk-PBKfDtaoCwjgPYjt6b6fEe1c524541EaAfC267F2834103E7", base_url="https://api.apiyi.com/v1")
 
-def chat(message, history):
-    try:
-        # 将对话历史转换为 OpenAI API 所需的格式
-        history_openai_format = []
-        history_openai_format.append({"role": "system", "content": "你需要需要按照用户的输入，选择合适的方法进行调用"})
-        for human, ai in history:
-            history_openai_format.append({"role": "user", "content": human})
-            history_openai_format.append({"role": "assistant", "content": ai})
-        history_openai_format.append({"role": "user", "content": message})
+def chatfunc(user_input):
+    messages = []
+    messages.append({"role": "system", "content": "你需要需要按照用户的输入，选择合适的方法进行调用"})
+    messages.append({"role": "user", "content": user_input})
+    global client
+    completion = client.chat.completions.create(
+        model="gpt-4o",
+        messages=messages,
+        tools=tools,
+        tool_choice='auto',
+    )
+    
+    return completion
+
+
+while True:
+    user_input = input("请提问：")
+    reply = chatfunc(user_input=user_input)
+    message = reply.choices[0].message
+    tools_call = message.tool_calls
+    print('ai want to call: ', tools_call)
+# def chat(message, history):
+#     try:
+#         # 将对话历史转换为 OpenAI API 所需的格式
+#         history_openai_format = []
+#         history_openai_format.append({"role": "system", "content": "你需要需要按照用户的输入，选择合适的方法进行调用"})
+#         for human, ai in history:
+#             history_openai_format.append({"role": "user", "content": human})
+#             history_openai_format.append({"role": "assistant", "content": ai})
+#         history_openai_format.append({"role": "user", "content": message})
         
-        try:
-            # 调用 DeepSeek API 创建聊天完成
-            response = client.chat.completions.create(
-                model='deepseek-chat',
-                messages=history_openai_format,
-                tools=tools,
-                tool_choice="auto",
-            )
+#         try:
+#             # 调用 DeepSeek API 创建聊天完成
+#             response = client.chat.completions.create(
+#                 model='deepseek-chat',
+#                 messages=history_openai_format,
+#                 tools=tools,
+#                 tool_choice="auto",
+#             )
 
-            response_massage = response.choices[0].message
-            tool_call = response_massage.tool
+#             response_massage = response.choices[0].message
+#             tool_call = response_massage.tool
             
-            partial_message = ""
-            if tool_call is None:
-                print("not tool_calls")
-            else:
-                available_functions = {
-                    "restart_service": restart_service,
-                    "apply_manifest": apply_manifest,
-                    "modify_config": modify_config,
-                }
-                function_name = tool_call.function.name
-                function_to_call = available_functions[function_name]
-                function_args = json.loads(tool_call.function.arguments)
-                function_response = function_to_call(**function_args)
-                partial_message.append(
-                    {
-                        "tool_call_id": tool_call.id,
-                        "role": "tool",
-                        "name": function_name,
-                        "content": function_response,
-                    }
-                )
-                yield partial_message
-                response = client.chat.completions.create(
-                    model='deepseek-chat',
-                    messages=history_openai_format,
-                    temperature=1.0,
-                    stream=True,
-                )
-            # for chunk in response:
-            #     # 逐步构建并 yield 部分响应
-            #     if chunk.choices[0].delta.content is not None:
-            #         partial_message += chunk.choices[0].delta.content
-            #         yield partial_message
-        except Exception as api_error:
-            # 处理 API 调用过程中的错误
-            yield f"API Error: {str(api_error)}"
-    except Exception as format_error:
-        # 处理格式化历史记录时的错误
-        yield f"Format Error: {str(format_error)}"
+#             partial_message = ""
+#             if tool_call is None:
+#                 print("not tool_calls")
+#             else:
+#                 available_functions = {
+#                     "restart_service": restart_service,
+#                     "apply_manifest": apply_manifest,
+#                     "modify_config": modify_config,
+#                 }
+#                 function_name = tool_call.function.name
+#                 function_to_call = available_functions[function_name]
+#                 function_args = json.loads(tool_call.function.arguments)
+#                 function_response = function_to_call(**function_args)
+#                 partial_message.append(
+#                     {
+#                         "tool_call_id": tool_call.id,
+#                         "role": "tool",
+#                         "name": function_name,
+#                         "content": function_response,
+#                     }
+#                 )
+#                 yield partial_message
+#                 response = client.chat.completions.create(
+#                     model='deepseek-chat',
+#                     messages=history_openai_format,
+#                     temperature=1.0,
+#                     stream=True,
+#                 )
+#             # for chunk in response:
+#             #     # 逐步构建并 yield 部分响应
+#             #     if chunk.choices[0].delta.content is not None:
+#             #         partial_message += chunk.choices[0].delta.content
+#             #         yield partial_message
+#         except Exception as api_error:
+#             # 处理 API 调用过程中的错误
+#             yield f"API Error: {str(api_error)}"
+#     except Exception as format_error:
+#         # 处理格式化历史记录时的错误
+#         yield f"Format Error: {str(format_error)}"
 
-# 创建 Gradio 界面
-iface = gr.ChatInterface(
-    chat,
-    chatbot=gr.Chatbot(height=500),
-    title="Function Calling",
-    description="Function Calling Demo.",
-    theme="soft",
-    examples=["Hello, how are you?", "What's the weather like today?"],
-)
+# # 创建 Gradio 界面
+# iface = gr.ChatInterface(
+#     chat,
+#     chatbot=gr.Chatbot(height=500),
+#     title="Function Calling",
+#     description="Function Calling Demo.",
+#     theme="soft",
+#     examples=["Hello, how are you?", "What's the weather like today?"],
+# )
 
-iface.launch()
+# iface.launch()
